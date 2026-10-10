@@ -41,3 +41,28 @@ export const post = <T>(path: string, data: unknown): Promise<T> =>
   api<T>(path, { method: 'POST', body: JSON.stringify(data) });
 export const patch = <T>(path: string, data: unknown): Promise<T> =>
   api<T>(path, { method: 'PATCH', body: JSON.stringify(data) });
+
+export interface Envelope<T> {
+  success: boolean;
+  data: T;
+  pagination?: { page: number; limit: number; total: number; totalPages: number };
+  meta?: Record<string, unknown>;
+}
+
+/** Full envelope (pagination/meta) for cases like the notifications unread count. */
+export async function getEnvelope<T>(path: string): Promise<Envelope<T>> {
+  let res = await raw(path);
+  if (res.status === 401 && !path.startsWith('/auth/')) {
+    const r = await raw('/auth/refresh', { method: 'POST' });
+    if (r.ok) {
+      const body = (await r.json()) as { data: { accessToken: string } };
+      setAccessToken(body.data.accessToken);
+      res = await raw(path);
+    }
+  }
+  const body = (await res.json().catch(() => ({}))) as Envelope<T> & { error?: { message: string } };
+  if (!res.ok || (body as { success?: boolean }).success === false) {
+    throw new Error((body as { error?: { message: string } }).error?.message ?? `Request failed (${res.status})`);
+  }
+  return body;
+}

@@ -26,7 +26,11 @@ export function Users(): JSX.Element {
 
   return (
     <div>
-      <PageHead title="Users" sub="Admin only. Role changes are audited via backend policy (no self-promotion)." />
+      <PageHead
+        eyebrow="Organization / access control"
+        title="Settings & Access"
+        sub="Manage users, roles, and account status. Admin only — you cannot change your own role."
+      />
       {msg ? <div className="card" style={{ marginBottom: 12 }}>{msg}</div> : null}
       <div className="toolbar">
         <input className="input" placeholder="Search name or email…" value={search} onChange={(e) => setSearch(e.target.value)} />
